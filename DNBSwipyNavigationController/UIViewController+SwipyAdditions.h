@@ -6,8 +6,6 @@
 //  Copyright (c) 2011 drunknbass. All rights reserved.
 //
 
-#import "AFSideBarItem.h"
-#import "AFSideBarController.h"
 
 @interface UIViewController (SwipyAdditions)
 
