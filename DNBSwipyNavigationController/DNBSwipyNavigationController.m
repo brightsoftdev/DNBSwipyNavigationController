@@ -232,6 +232,13 @@ static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
         overShootDistance = 0;
     }
     
+    // Stop pans from snapping back to middle if pan is the direction we are already snapped
+    if (_currentPosition == ControllerPositionRight && point.x>=CGRectGetMinX(self.transitionView.frame)) {
+        return;
+    } else if (_currentPosition == ControllerPositionLeft && point.x<=CGRectGetMinX(self.transitionView.frame)) {
+        return;
+    }
+    
     if (distance > kPAN_DISTANCE_THRESHOLD) {
         if (_currentPosition == ControllerPositionRegular) {
             if (draggingToRight) {
@@ -273,6 +280,8 @@ static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
             self.container.frame = r;
         };
     }
+    
+    
 
     float duration = .30 - (speed/10000);   // Magic!
     if (duration < .1) {
