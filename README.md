@@ -9,3 +9,8 @@ Only tested on iPhone with controllers narrower than the screen.
 ## Documentation
 
 None, it's not done yet.
+
+## Demo Video
+
+Check out the current demo on youtube.
+http://c.drunknbass.com/DIlC
