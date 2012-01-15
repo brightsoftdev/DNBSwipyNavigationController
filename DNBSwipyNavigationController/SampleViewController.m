@@ -11,6 +11,7 @@
 
 
 @interface SampleViewController()
+- (void)fixBackgroundLayoutForOrientation:(UIInterfaceOrientation)orientation;
 @property (nonatomic, assign) ControllerTheme theme;
 @end
 
@@ -86,7 +87,7 @@
     }
     
     self.navigationController.delegate = self;
-    
+    [self fixBackgroundLayoutForOrientation:self.interfaceOrientation];
 }
 
 - (void)viewDidUnload
@@ -106,7 +107,11 @@
 }
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
-    if (UIInterfaceOrientationIsPortrait(toInterfaceOrientation)) {
+    [self fixBackgroundLayoutForOrientation:toInterfaceOrientation];
+}
+
+- (void)fixBackgroundLayoutForOrientation:(UIInterfaceOrientation)orientation {
+    if (UIInterfaceOrientationIsPortrait(orientation)) {
         CGRect r = self.backgroundView.frame;
         r.size.width = [[UIScreen mainScreen] applicationFrame].size.width;
         r.size.height = [[UIScreen mainScreen] applicationFrame].size.height - self.navigationController.navigationBar.frame.size.height;
@@ -114,7 +119,7 @@
         if (self.theme == ControllerThemeFacebook) {
             self.backgroundView.image = [UIImage imageNamed:@"fbBG"];
         }
-    } else if (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) {
+    } else if (UIInterfaceOrientationIsLandscape(orientation)) {
         CGRect r = self.backgroundView.frame;
         r.size.width = [[UIScreen mainScreen] applicationFrame].size.height;
         r.size.height = [[UIScreen mainScreen] applicationFrame].size.width - self.navigationController.navigationBar.frame.size.height;
