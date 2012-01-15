@@ -13,4 +13,4 @@ None, it's not done yet.
 ## Demo Video
 
 Check out the current demo on youtube.
-http://c.drunknbass.com/DIlC
+http://youtu.be/CrK1Fytl4pk
