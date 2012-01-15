@@ -9,24 +9,22 @@
 #import "DNBSwipyNavigationController.h"
 #import <QuartzCore/QuartzCore.h>
 
-typedef enum {
-    ControllerPositionRegular = 0,
-    ControllerPositionLeft = 1,
-    ControllerPositionRight = 2
-} ControllerPosition;
+
 
 @interface DNBSwipyNavigationController() {
     UIView *_transitionView;
     CGPoint _dragOriginPoint;
-    ControllerPosition _currentPosition;
 }
 - (CGRect)adjustedFrameForPannedFrame:(CGRect)frame;
 - (void)completePanWithPoint:(CGPoint)point andSpeed:(float)speed;
 - (void)pushLeftController:(UIViewController *)controller;
 - (void)pushRightController:(UIViewController *)controller;
-- (void)snapBackToMiddle;
+- (void)snapTo:(ControllerPosition)position;
 @property (nonatomic, retain) UIView *container;
 @property (nonatomic, readonly) UIView* transitionView;
+@property (nonatomic, readonly) BOOL leftControllerEnabled;
+@property (nonatomic, readonly) BOOL rightControllerEnabled;
+@property (nonatomic, retain) UIPanGestureRecognizer *panGestureRecognizer;
 @end
 
 
@@ -35,8 +33,10 @@ typedef enum {
 
 @synthesize nilSideControllersShouldPopCurrentControllers = _nilSideControllersShouldPopCurrentControllers;
 @synthesize bounceEnabled = _bounceEnabled;
+@synthesize currentPosition = _currentPosition;
+@synthesize panGestureRecognizer = _panGestureRecognizer;
 
-static float const kPAN_DISTANCE_THRESHOLD = 10;
+static float const kPAN_DISTANCE_THRESHOLD = 20;
 static float const kPAN_MIN_VELOCITY_THRESHOLD = 500;
 static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
 
@@ -64,22 +64,22 @@ static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
 }
 
 - (void)pushViewController:(UIViewController *)viewController animated:(BOOL)animated {
-    [self snapBackToMiddle];
+    [self snapTo:ControllerPositionRegular];
     [super pushViewController:viewController animated:animated];
 }
 
 - (void)presentModalViewController:(UIViewController *)modalViewController animated:(BOOL)animated {
-    [self snapBackToMiddle];
+    [self snapTo:ControllerPositionRegular];
     [super presentModalViewController:modalViewController animated:animated];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation {
-    [self snapBackToMiddle];
-    return YES;
+    [self snapTo:ControllerPositionRegular];
+    return [self.visibleViewController shouldAutorotateToInterfaceOrientation:toInterfaceOrientation];
 }
 
 - (void)navigationBar:(UINavigationBar *)navigationBar didPopItem:(UINavigationItem *)item {
-    [self snapBackToMiddle];
+    [self snapTo:ControllerPositionRegular];
 }
 
 #pragma mark - Gesture Recognizers
@@ -144,17 +144,22 @@ static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
 
 
 #pragma mark - Properties
-
+// This setValue for key uses a private ivar. Apple might deny you in appstore. Or be smart enough to "mask" it ;)
 - (void)setNavigationBar:(id)bar {
     UINavigationBar *b = bar;
     if (b) {
         [self setValue:b forKey:@"_navigationBar"];
         b.delegate = self;
         b.clipsToBounds = YES;
-        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panned:)];
-        pan.delegate = self;
-        [self.navigationBar addGestureRecognizer:pan];
+        self.panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panned:)];
+        self.panGestureRecognizer.delegate = self;
+        [self.navigationBar addGestureRecognizer:self.panGestureRecognizer];
     }
+}
+
+- (void)setCurrentPosition:(ControllerPosition)currentPosition {
+    _currentPosition = currentPosition;
+    [self snapTo:currentPosition];
 }
 
 @dynamic transitionView;
@@ -170,6 +175,23 @@ static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
         }
     }
     
+    return ret;
+}
+
+@dynamic leftControllerEnabled;
+- (BOOL)leftControllerEnabled {
+    BOOL ret = YES;
+    if ([self.delegate respondsToSelector:@selector(leftControllerEnabled)]) {
+        ret = (BOOL)[self.delegate performSelector:@selector(leftControllerEnabled)];
+    }
+    return ret;
+}
+@dynamic rightControllerEnabled;
+- (BOOL)rightControllerEnabled {
+    BOOL ret = YES;
+    if ([self.delegate respondsToSelector:@selector(rightControllerEnabled)]) {
+        ret = (BOOL)[self.delegate performSelector:@selector(rightControllerEnabled)];
+    }
     return ret;
 }
 
@@ -194,29 +216,63 @@ static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
 #pragma mark - Private Methods
 
 - (CGRect)adjustedFrameForPannedFrame:(CGRect)frame {
+    
+
     CGRect ret = frame;
     if (frame.origin.x > 0 && fabsf(frame.origin.x) > self.leftController.view.frame.size.width) {
         ret.origin.x = self.leftController.view.frame.size.width;
     } else if (frame.origin.x < 0 && fabsf(frame.origin.x) > self.rightController.view.frame.size.width) {
         ret.origin.x = -(self.rightController.view.frame.size.width);
     }
+    
+    // Adjust frame if controller exposed is disabled
+    if (self.rightControllerEnabled == NO && frame.origin.x < 0) {
+        ret.origin.x = 0;
+    }
+    
     return ret;
 }
-- (void)snapBackToMiddle {
-    if (_currentPosition == ControllerPositionRegular) {
-        return;
+- (void)snapTo:(ControllerPosition)position {
+
+    void (^snap)() = nil;
+    switch (position) {
+        case ControllerPositionRegular: {
+            snap = ^{
+                CGRect r = self.container.frame;
+                r.origin.x = 0;
+                self.container.frame = r;
+            };
+        }   break;
+        case ControllerPositionLeft: {
+            if (self.rightControllerEnabled) {
+                snap = ^{
+                    CGRect r = self.container.frame;
+                    r.origin.x = 0-self.rightController.view.frame.size.width;
+                    self.container.frame = r;
+                    [self.rightController.view.superview insertSubview:self.rightController.view atIndex:[self.rightController.view.superview.subviews indexOfObject:self.container]-1];
+                };
+            }
+        }   break;
+        case ControllerPositionRight: {
+            if (self.leftControllerEnabled) {
+                snap = ^{
+                    CGRect r = self.container.frame;
+                    r.origin.x = 0+self.leftController.view.frame.size.width;
+                    self.container.frame = r;
+                    [self.leftController.view.superview insertSubview:self.leftController.view atIndex:[self.leftController.view.superview.subviews indexOfObject:self.container]-1];
+                };
+            }
+        }   break;
+            
     }
-    void (^snap)() = ^{
-        CGRect r = self.container.frame;
-        r.origin.x = 0;
-        self.container.frame = r;
-        _currentPosition = ControllerPositionRegular;
-    };
+    
     [UIView animateWithDuration:.20 delay:0.0 
                         options:UIViewAnimationOptionCurveEaseOut|UIViewAnimationOptionBeginFromCurrentState animations:snap completion:^(BOOL finished) {
                             
                         }];
 }
+
+
 
 - (void)completePanWithPoint:(CGPoint)point andSpeed:(float)speed {
 
@@ -253,14 +309,18 @@ static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
                 };
             } else {
                 // pop controller to left exposing right controller
-                snap = ^{
-                    CGRect r = self.container.frame;
-                    r.origin.x = 0 - self.rightController.view.frame.size.width-overShootDistance;
-                    self.container.frame = r;
-                    
-                    _currentPosition = ControllerPositionLeft;
-                    
-                };
+                if (self.rightControllerEnabled == NO) {
+                    // do nothing
+                } else {
+                    snap = ^{
+                        CGRect r = self.container.frame;
+                        r.origin.x = 0 - self.rightController.view.frame.size.width-overShootDistance;
+                        self.container.frame = r;
+                        
+                        _currentPosition = ControllerPositionLeft;
+                        
+                    };
+                }
             }
         } else if (_currentPosition == ControllerPositionLeft || _currentPosition == ControllerPositionRight) {
             // pop to middle
@@ -339,14 +399,16 @@ static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
         // pop this controller to nothing
     } else {
         [super setLeftController:controller];
+        [controller loadView];
         // add view and call vc methods and animate it on
         UIView *v = controller.view;
         CGRect r = v.frame;
         r.size.height = self.transitionView.frame.size.height;
         v.frame = r;
         v.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleHeight;
+        [controller viewWillAppear:YES];
         [self.view insertSubview:v atIndex:0];
-        
+        [controller viewDidAppear:YES];
     }
 }
 - (void)pushRightController:(UIViewController *)controller {

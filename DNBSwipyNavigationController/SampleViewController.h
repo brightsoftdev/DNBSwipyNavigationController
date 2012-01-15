@@ -7,12 +7,20 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "DNBSwipyNavigationController.h"
 
-@interface SampleViewController : UIViewController
+typedef enum {
+    ControllerThemeFacebook = 0,
+    ControllerThemePath = 1
+}ControllerTheme;
+
+
+@interface SampleViewController : UIViewController <DNBSwipyNavigationControllerDelegate>
 
 @property (nonatomic, retain) IBOutlet UINavigationBar *bar;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *closeButton;
 @property (nonatomic, retain) IBOutlet UINavigationItem *titleItem;
+@property (nonatomic, retain) IBOutlet UIImageView *backgroundView;
 
 - (IBAction)push:(id)sender;
 - (IBAction)pop:(id)sender;
@@ -20,5 +28,6 @@
 - (IBAction)popToSelf:(id)sender;
 - (IBAction)presentModal:(id)sender;
 - (IBAction)dismissModal:(id)sender;
+- (IBAction)switchTheme:(id)sender;
 
 @end

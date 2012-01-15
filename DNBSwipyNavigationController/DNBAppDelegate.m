@@ -8,8 +8,6 @@
 
 #import "DNBAppDelegate.h"
 #import "DNBSwipyNavigationController.h"
-#import "LeftViewController.h"
-#import "RightViewController.h"
 #import "SampleViewController.h"
 
 @implementation DNBAppDelegate
@@ -18,6 +16,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackOpaque];
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.window.backgroundColor = [UIColor blackColor];
     // Override point for customization after application launch.
@@ -28,13 +27,7 @@
     DNBSwipyNavigationController *n = [[DNBSwipyNavigationController alloc] initWithRootViewController:rootController];
     self.window.rootViewController = n;
     n.bounceEnabled = YES;
-    
-    LeftViewController *l = [[LeftViewController alloc] initWithNibName:@"LeftViewController" bundle:nil];
-    n.leftController = l;
-    
-    RightViewController *r = [[RightViewController alloc] initWithNibName:@"RightViewController" bundle:nil];
-    n.rightController = r;
-    
+
     return YES;
 }
 
