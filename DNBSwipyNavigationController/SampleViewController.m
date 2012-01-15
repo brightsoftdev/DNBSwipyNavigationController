@@ -71,7 +71,6 @@
             c.bounceEnabled = NO;
             if (self == [c.viewControllers objectAtIndex:0]) {
                 self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"NavBarIconLauncher"] style:UIBarButtonItemStylePlain target:self action:@selector(showLeftController)];
-                self.navigationController.navigationBar.tintColor = [UIColor colorWithRed:78.0/255.0 green:104.0/255.0 blue:160.0/255.0 alpha:1];
                 self.navigationItem.leftBarButtonItem.enabled = YES;
             }
             break;
@@ -80,7 +79,6 @@
             c.bounceEnabled = YES;
             if (self == [c.viewControllers objectAtIndex:0]) {
                 self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"nav-menu-icon"] style:UIBarButtonItemStylePlain target:self action:@selector(showLeftController)];
-                self.navigationController.navigationBar.tintColor = [UIColor colorWithRed:164.0/255.0 green:32.0/255.0 blue:15.0/255.0 alpha:1];
                 self.navigationItem.leftBarButtonItem.enabled = YES;
             }
             break;
@@ -103,10 +101,11 @@
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     // Return YES for supported orientations
-	return ( _theme == ControllerThemeFacebook ? YES : (UIInterfaceOrientationPortrait == interfaceOrientation) );
+	return ( _theme != ControllerThemePath ? YES : (UIInterfaceOrientationPortrait == interfaceOrientation) );
 }
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
+    [super willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
     [self fixBackgroundLayoutForOrientation:toInterfaceOrientation];
 }
 
@@ -194,6 +193,7 @@
             [c.navigationBar addGestureRecognizer:c.panGestureRecognizer];
             c.leftController = [[UIViewController alloc] initWithNibName:@"FacebookLeftController" bundle:nil];
             c.bounceEnabled = NO;
+            c.navigationBar.tintColor = [UIColor colorWithRed:78.0/255.0 green:104.0/255.0 blue:160.0/255.0 alpha:1];
             self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"All Stories" style:UIBarButtonItemStylePlain target:self action:nil];
             self.backgroundView.image = [UIImage imageNamed:@"fbBG"];
             [[UIBarButtonItem appearance] setBackgroundImage:[UIImage imageNamed:@"NavBarButtonPortrait"] forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
@@ -205,6 +205,7 @@
             c.leftController = [[UIViewController alloc] initWithNibName:@"PathLeftController" bundle:nil];
             c.rightController = [[UIViewController alloc] initWithNibName:@"PathRightController" bundle:nil];
             c.bounceEnabled = YES;
+            c.navigationBar.tintColor = [UIColor colorWithRed:164.0/255.0 green:32.0/255.0 blue:15.0/255.0 alpha:1];
             self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"nav-friends-icon"] style:UIBarButtonItemStylePlain target:self action:@selector(showRightController)];
             self.backgroundView.image = [UIImage imageNamed:@"pathBG"];
             [[UIBarButtonItem appearance] setBackgroundImage:[UIImage imageNamed:@"nav-bar-button"] forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];

@@ -23,7 +23,6 @@
     self.window.backgroundColor = [UIColor whiteColor];
     [self.window makeKeyAndVisible];
     SampleViewController *rootController = [[SampleViewController alloc] initWithNibName:@"SampleViewController" bundle:nil];
-    rootController.view.backgroundColor = [UIColor redColor];
     DNBSwipyNavigationController *n = [[DNBSwipyNavigationController alloc] initWithRootViewController:rootController];
     self.window.rootViewController = n;
     n.bounceEnabled = YES;

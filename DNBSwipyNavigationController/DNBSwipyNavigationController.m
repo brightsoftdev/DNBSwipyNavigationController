@@ -73,9 +73,8 @@ static float const kPAN_MAX_VELOCITY_THRESHOLD = 3000;
     [super presentModalViewController:modalViewController animated:animated];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation {
+- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
     [self snapTo:ControllerPositionRegular];
-    return [self.visibleViewController shouldAutorotateToInterfaceOrientation:toInterfaceOrientation];
 }
 
 - (void)navigationBar:(UINavigationBar *)navigationBar didPopItem:(UINavigationItem *)item {
